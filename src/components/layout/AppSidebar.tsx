@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { title: "Chat", url: "/", icon: MessageSquare },
+  { title: "Upload", url: "/upload", icon: Upload },
   { title: "Configuration", url: "/config", icon: Settings },
 ];
 

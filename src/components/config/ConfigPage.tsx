@@ -14,21 +14,30 @@ interface ConfigPageProps {
 export function ConfigPage({ onConfigChange }: ConfigPageProps) {
   const [apiUrl, setApiUrl] = useState("");
   const [method, setMethod] = useState("POST");
+  const [uploadUrl, setUploadUrl] = useState("");
+  const [uploadMethod, setUploadMethod] = useState("POST");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isTestingUpload, setIsTestingUpload] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     // Charger la configuration depuis localStorage
     const savedUrl = localStorage.getItem("chat-api-url");
     const savedMethod = localStorage.getItem("chat-api-method");
+    const savedUploadUrl = localStorage.getItem("upload-api-url");
+    const savedUploadMethod = localStorage.getItem("upload-api-method");
     
     if (savedUrl) setApiUrl(savedUrl);
     if (savedMethod) setMethod(savedMethod);
+    if (savedUploadUrl) setUploadUrl(savedUploadUrl);
+    if (savedUploadMethod) setUploadMethod(savedUploadMethod);
   }, []);
 
   const saveConfig = () => {
     localStorage.setItem("chat-api-url", apiUrl);
     localStorage.setItem("chat-api-method", method);
+    localStorage.setItem("upload-api-url", uploadUrl);
+    localStorage.setItem("upload-api-method", uploadMethod);
     
     onConfigChange?.({ apiUrl, method });
     
@@ -57,20 +66,56 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
       
       if (response.ok || response.status === 405) { // 405 = Method Not Allowed est OK pour un test
         toast({
-          title: "Connexion réussie",
-          description: "L'API est accessible.",
+          title: "Connexion chat réussie",
+          description: "L'API de chat est accessible.",
         });
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       toast({
-        title: "Erreur de connexion",
-        description: error instanceof Error ? error.message : "Impossible de joindre l'API",
+        title: "Erreur de connexion chat",
+        description: error instanceof Error ? error.message : "Impossible de joindre l'API de chat",
         variant: "destructive",
       });
     } finally {
       setIsTestingConnection(false);
+    }
+  };
+
+  const testUploadConnection = async () => {
+    if (!uploadUrl) {
+      toast({
+        title: "URL d'upload requise",
+        description: "Veuillez entrer une URL d'upload valide.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingUpload(true);
+    
+    try {
+      const response = await fetch(uploadUrl, {
+        method: "HEAD", // Test simple sans données
+      });
+      
+      if (response.ok || response.status === 405) { // 405 = Method Not Allowed est OK pour un test
+        toast({
+          title: "Connexion upload réussie",
+          description: "L'API d'upload est accessible.",
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur de connexion upload",
+        description: error instanceof Error ? error.message : "Impossible de joindre l'API d'upload",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingUpload(false);
     }
   };
 
@@ -80,77 +125,46 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
         <CardHeader>
           <CardTitle className="text-2xl">Configuration du Chat IA</CardTitle>
           <CardDescription>
-            Configurez l'URL de votre API et la méthode HTTP pour les requêtes de chat.
+            Configurez les URLs et méthodes HTTP pour le chat et l'upload de fichiers.
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="api-url">URL de l'API</Label>
-            <Input
-              id="api-url"
-              type="url"
-              placeholder="https://api.example.com/chat"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              className="bg-background text-foreground"
-            />
-            <p className="text-sm text-muted-foreground">
-              L'URL de votre endpoint d'API de chat
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="method">Méthode HTTP</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger className="bg-background text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="POST">POST</SelectItem>
-                <SelectItem value="PUT">PUT</SelectItem>
-                <SelectItem value="PATCH">PATCH</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              La méthode HTTP à utiliser pour envoyer les messages
-            </p>
-          </div>
-
-          <div className="border-t border-border pt-6">
-            <h3 className="text-lg font-medium mb-4">Format des données envoyées</h3>
-            <div className="bg-muted p-4 rounded-lg">
-              <pre className="text-sm text-muted-foreground">
-{`FormData {
-  message: "contenu du message",
-  files: [fichiers uploadés] // optionnel
-}`}
-              </pre>
+        <CardContent className="space-y-8">
+          {/* Configuration Chat */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">API de Chat</h3>
+            <div className="space-y-2">
+              <Label htmlFor="api-url">URL de l'API Chat</Label>
+              <Input
+                id="api-url"
+                type="url"
+                placeholder="https://api.example.com/chat"
+                value={apiUrl}
+                onChange={(e) => setApiUrl(e.target.value)}
+                className="bg-background text-foreground"
+              />
+              <p className="text-sm text-muted-foreground">
+                L'URL de votre endpoint d'API de chat
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Les données sont envoyées en tant que FormData pour supporter l'upload de fichiers.
-            </p>
-          </div>
 
-          <div className="border-t border-border pt-6">
-            <h3 className="text-lg font-medium mb-4">Format de réponse attendu</h3>
-            <div className="bg-muted p-4 rounded-lg">
-              <pre className="text-sm text-muted-foreground">
-{`{
-  "response": "réponse de l'IA",
-  // ou
-  "message": "réponse de l'IA"
-}`}
-              </pre>
+            <div className="space-y-2">
+              <Label htmlFor="method">Méthode HTTP Chat</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                  <SelectItem value="PATCH">PATCH</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                La méthode HTTP à utiliser pour envoyer les messages
+              </p>
             </div>
-          </div>
 
-          <div className="flex space-x-4 pt-6">
-            <Button onClick={saveConfig} className="bg-primary hover:bg-primary/90">
-              <Save className="mr-2 h-4 w-4" />
-              Sauvegarder
-            </Button>
-            
             <Button
               variant="outline"
               onClick={testConnection}
@@ -158,7 +172,107 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
               className="border-border text-foreground hover:bg-accent"
             >
               <TestTube className="mr-2 h-4 w-4" />
-              {isTestingConnection ? "Test en cours..." : "Tester la connexion"}
+              {isTestingConnection ? "Test en cours..." : "Tester la connexion chat"}
+            </Button>
+          </div>
+
+          {/* Configuration Upload */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">API d'Upload</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="upload-url">URL de l'API Upload</Label>
+              <Input
+                id="upload-url"
+                type="url"
+                placeholder="https://api.example.com/upload"
+                value={uploadUrl}
+                onChange={(e) => setUploadUrl(e.target.value)}
+                className="bg-background text-foreground"
+              />
+              <p className="text-sm text-muted-foreground">
+                L'URL de votre endpoint d'API d'upload de fichiers
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="upload-method">Méthode HTTP Upload</Label>
+              <Select value={uploadMethod} onValueChange={setUploadMethod}>
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                  <SelectItem value="PATCH">PATCH</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                La méthode HTTP à utiliser pour uploader les fichiers
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={testUploadConnection}
+              disabled={isTestingUpload || !uploadUrl}
+              className="border-border text-foreground hover:bg-accent"
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              {isTestingUpload ? "Test en cours..." : "Tester la connexion upload"}
+            </Button>
+          </div>
+
+          {/* Format des données */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">Formats de données</h3>
+            <div>
+              <h4 className="font-medium mb-2">Format Chat</h4>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="text-sm text-muted-foreground">
+{`FormData {
+  message: "contenu du message",
+  files: [fichiers uploadés] // optionnel
+}`}
+                </pre>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Les données sont envoyées en tant que FormData pour supporter l'upload de fichiers.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-2">Format Upload</h4>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="text-sm text-muted-foreground">
+{`FormData {
+  file: [fichier uploadé]
+}`}
+                </pre>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Chaque fichier est envoyé individuellement en tant que FormData.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-2">Format de réponse attendu</h4>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="text-sm text-muted-foreground">
+{`{
+  "response": "réponse de l'IA",
+  // ou
+  "message": "réponse de l'IA"
+}`}
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-6 border-t border-border">
+            <Button onClick={saveConfig} className="bg-primary hover:bg-primary/90">
+              <Save className="mr-2 h-4 w-4" />
+              Sauvegarder tout
             </Button>
           </div>
         </CardContent>
