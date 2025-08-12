@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, MicOff, Copy, Trash2 } from "lucide-react";
+import { Mic, MicOff, Copy, Trash2, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface SpeechRecognition extends EventTarget {
@@ -56,10 +56,17 @@ export const VoiceTranscription = () => {
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [chatConfig, setChatConfig] = useState({ apiUrl: "", method: "POST" });
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Charger la configuration chat depuis localStorage
+    const savedChatUrl = localStorage.getItem("chat-api-url") || "";
+    const savedChatMethod = localStorage.getItem("chat-api-method") || "POST";
+    setChatConfig({ apiUrl: savedChatUrl, method: savedChatMethod });
+
     // Vérifier le support de la reconnaissance vocale
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -165,6 +172,61 @@ export const VoiceTranscription = () => {
     setInterimTranscript("");
   };
 
+  const sendToChat = async () => {
+    if (!transcript.trim()) {
+      toast({
+        title: "Aucun texte",
+        description: "Aucun texte à envoyer",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!chatConfig.apiUrl) {
+      toast({
+        title: "Configuration manquante",
+        description: "Veuillez configurer l'URL de l'API chat dans les paramètres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("message", transcript);
+
+      const response = await fetch(chatConfig.apiUrl, {
+        method: chatConfig.method,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      toast({
+        title: "Succès",
+        description: "Transcription envoyée au chat avec succès",
+      });
+
+      // Optionnel: vider la transcription après envoi
+      clearTranscript();
+
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors de l'envoi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   if (!isSupported) {
     return (
       <Card className="p-6">
@@ -191,6 +253,14 @@ export const VoiceTranscription = () => {
               disabled={!transcript}
             >
               <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={sendToChat}
+              disabled={!transcript || isSending}
+            >
+              {isSending ? "Envoi..." : <Send className="h-4 w-4" />}
             </Button>
             <Button
               variant="outline"
