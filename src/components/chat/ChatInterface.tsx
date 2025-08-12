@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { AudioRecorder } from "@/components/audio/AudioRecorder";
 
 interface Message {
   id: string;
@@ -25,8 +26,16 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioConfig, setAudioConfig] = useState({ apiUrl: "", method: "POST" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Charger la configuration audio depuis localStorage
+    const savedAudioUrl = localStorage.getItem("audio-api-url") || "";
+    const savedAudioMethod = localStorage.getItem("audio-api-method") || "POST";
+    setAudioConfig({ apiUrl: savedAudioUrl, method: savedAudioMethod });
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -194,14 +203,19 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
                 className="resize-none pr-12 bg-card text-card-foreground"
                 rows={1}
               />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="absolute right-2 top-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
+              <div className="absolute right-2 top-2 flex space-x-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <AudioRecorder 
+                  apiUrl={audioConfig.apiUrl} 
+                  method={audioConfig.method} 
+                />
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"

@@ -16,6 +16,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
   const [method, setMethod] = useState("POST");
   const [uploadUrl, setUploadUrl] = useState("");
   const [uploadMethod, setUploadMethod] = useState("POST");
+  const [audioUrl, setAudioUrl] = useState("");
+  const [audioMethod, setAudioMethod] = useState("POST");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isTestingUpload, setIsTestingUpload] = useState(false);
   const { toast } = useToast();
@@ -26,11 +28,15 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     const savedMethod = localStorage.getItem("chat-api-method");
     const savedUploadUrl = localStorage.getItem("upload-api-url");
     const savedUploadMethod = localStorage.getItem("upload-api-method");
+    const savedAudioUrl = localStorage.getItem("audio-api-url");
+    const savedAudioMethod = localStorage.getItem("audio-api-method");
     
     if (savedUrl) setApiUrl(savedUrl);
     if (savedMethod) setMethod(savedMethod);
     if (savedUploadUrl) setUploadUrl(savedUploadUrl);
     if (savedUploadMethod) setUploadMethod(savedUploadMethod);
+    if (savedAudioUrl) setAudioUrl(savedAudioUrl);
+    if (savedAudioMethod) setAudioMethod(savedAudioMethod);
   }, []);
 
   const saveConfig = () => {
@@ -38,6 +44,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     localStorage.setItem("chat-api-method", method);
     localStorage.setItem("upload-api-url", uploadUrl);
     localStorage.setItem("upload-api-method", uploadMethod);
+    localStorage.setItem("audio-api-url", audioUrl);
+    localStorage.setItem("audio-api-method", audioMethod);
     
     onConfigChange?.({ apiUrl, method });
     
@@ -223,6 +231,43 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
             </Button>
           </div>
 
+          {/* Configuration Audio */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">API Audio</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="audio-url">URL de l'API Audio</Label>
+              <Input
+                id="audio-url"
+                type="url"
+                placeholder="https://api.example.com/audio"
+                value={audioUrl}
+                onChange={(e) => setAudioUrl(e.target.value)}
+                className="bg-background text-foreground"
+              />
+              <p className="text-sm text-muted-foreground">
+                L'URL de votre endpoint d'API d'enregistrement audio
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="audio-method">Méthode HTTP Audio</Label>
+              <Select value={audioMethod} onValueChange={setAudioMethod}>
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                  <SelectItem value="PATCH">PATCH</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                La méthode HTTP à utiliser pour envoyer les enregistrements audio
+              </p>
+            </div>
+          </div>
+
           {/* Format des données */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium border-b border-border pb-2">Formats de données</h3>
@@ -252,6 +297,20 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 Chaque fichier est envoyé individuellement en tant que FormData.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-2">Format Audio</h4>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="text-sm text-muted-foreground">
+{`FormData {
+  audio: [fichier .wav enregistré]
+}`}
+                </pre>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                L'enregistrement audio est automatiquement converti en .wav et envoyé en tant que FormData.
               </p>
             </div>
 
