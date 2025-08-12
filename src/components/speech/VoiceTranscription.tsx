@@ -120,9 +120,12 @@ export const VoiceTranscription = () => {
     };
   }, [toast]);
 
-  const startListening = () => {
+  const startListening = async () => {
     if (recognitionRef.current && !isListening) {
       try {
+        // Demander l'autorisation d'accès au microphone
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        
         recognitionRef.current.start();
         setIsListening(true);
         toast({
@@ -131,11 +134,28 @@ export const VoiceTranscription = () => {
         });
       } catch (error) {
         console.error('Erreur lors du démarrage:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de démarrer la reconnaissance vocale",
-          variant: "destructive",
-        });
+        
+        if (error instanceof Error) {
+          if (error.name === 'NotAllowedError') {
+            toast({
+              title: "Permission refusée",
+              description: "Veuillez autoriser l'accès au microphone pour utiliser cette fonction",
+              variant: "destructive",
+            });
+          } else if (error.name === 'NotFoundError') {
+            toast({
+              title: "Microphone introuvable",
+              description: "Aucun microphone n'a été détecté sur votre appareil",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Erreur",
+              description: "Impossible de démarrer la reconnaissance vocale",
+              variant: "destructive",
+            });
+          }
+        }
       }
     }
   };
