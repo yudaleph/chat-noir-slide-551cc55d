@@ -1,4 +1,4 @@
-import { MessageSquare, Settings, Upload, Plus, Mic } from "lucide-react";
+import { MessageSquare, Settings, Upload, Plus } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 const menuItems = [
   { title: "Chat", url: "/", icon: MessageSquare },
   { title: "Upload", url: "/upload", icon: Upload },
-  { title: "Transcription", url: "/transcription", icon: Mic },
   { title: "Configuration", url: "/config", icon: Settings },
 ];
 

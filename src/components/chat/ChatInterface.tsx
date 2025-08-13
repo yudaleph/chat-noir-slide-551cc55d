@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AudioRecorder } from "@/components/audio/AudioRecorder";
+import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 
 interface Message {
   id: string;
@@ -139,7 +140,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
                     : "bg-chat-assistant text-chat-assistant-foreground"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <MarkdownRenderer content={message.content} />
                 {message.files && message.files.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {message.files.map((file, index) => (
