@@ -6,9 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 interface AudioRecorderProps {
   apiUrl: string;
   method: string;
+  onResponse?: (response: string) => void;
 }
 
-export const AudioRecorder = ({ apiUrl, method }: AudioRecorderProps) => {
+export const AudioRecorder = ({ apiUrl, method, onResponse }: AudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -82,6 +83,13 @@ export const AudioRecorder = ({ apiUrl, method }: AudioRecorderProps) => {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        const responseText = data.message || data.response || data.text || "Réponse reçue";
+        
+        if (onResponse) {
+          onResponse(responseText);
+        }
+        
         toast({
           title: "Succès",
           description: "Audio envoyé avec succès",

@@ -213,7 +213,16 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
                 </Button>
                 <AudioRecorder 
                   apiUrl={audioConfig.apiUrl} 
-                  method={audioConfig.method} 
+                  method={audioConfig.method}
+                  onResponse={(response) => {
+                    const assistantMessage: Message = {
+                      id: crypto.randomUUID(),
+                      content: response,
+                      role: "assistant",
+                      timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, assistantMessage]);
+                  }}
                 />
               </div>
               <input
