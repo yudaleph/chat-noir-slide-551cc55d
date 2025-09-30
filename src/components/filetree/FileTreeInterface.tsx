@@ -1,12 +1,9 @@
-import { useState, useEffect } from "react";
-import { Folder, File, Plus, Trash2, RefreshCw, FolderPlus, FilePlus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Folder, File, Upload as UploadIcon, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
 interface TreeNode {
   id: string;
@@ -24,11 +21,9 @@ interface FileTreeInterfaceProps {
 export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInterfaceProps) {
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemType, setNewItemType] = useState<"file" | "folder">("file");
-  const [newItemPath, setNewItemPath] = useState("/");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,48 +70,45 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
     }
   };
 
-  const createItem = async () => {
-    if (!apiUrl || !newItemName) {
-      toast({
-        title: "Données manquantes",
-        description: "Veuillez renseigner le nom de l'élément.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
 
+  const uploadFiles = async (files: FileList) => {
+    if (!apiUrl || files.length === 0) return;
+
+    setUploading(true);
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newItemName,
-          type: newItemType,
-          path: newItemPath,
-        }),
-      });
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("path", "/");
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Échec de l'upload de ${file.name}: ${response.statusText}`);
+        }
       }
 
       toast({
-        title: `${newItemType === "folder" ? "Dossier" : "Fichier"} créé`,
-        description: `${newItemName} a été créé avec succès.`,
+        title: "Fichiers uploadés",
+        description: `${files.length} fichier(s) uploadé(s) avec succès.`,
       });
 
-      setNewItemName("");
-      setNewItemPath("/");
-      setIsDialogOpen(false);
       await fetchTree();
     } catch (error) {
       toast({
-        title: "Erreur de création",
-        description: error instanceof Error ? error.message : "Impossible de créer l'élément",
+        title: "Erreur d'upload",
+        description: error instanceof Error ? error.message : "Impossible d'uploader les fichiers",
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -237,78 +229,36 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
                 Actualiser
               </Button>
               
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    disabled={!apiUrl}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nouveau
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Créer un élément</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label>Type</Label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={newItemType === "file" ? "default" : "outline"}
-                          onClick={() => setNewItemType("file")}
-                          className="flex-1"
-                        >
-                          <FilePlus className="h-4 w-4 mr-2" />
-                          Fichier
-                        </Button>
-                        <Button
-                          variant={newItemType === "folder" ? "default" : "outline"}
-                          onClick={() => setNewItemType("folder")}
-                          className="flex-1"
-                        >
-                          <FolderPlus className="h-4 w-4 mr-2" />
-                          Dossier
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="item-name">Nom</Label>
-                      <Input
-                        id="item-name"
-                        placeholder={newItemType === "folder" ? "mon-dossier" : "mon-fichier.txt"}
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="item-path">Chemin parent</Label>
-                      <Input
-                        id="item-path"
-                        placeholder="/"
-                        value={newItemPath}
-                        onChange={(e) => setNewItemPath(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Le dossier dans lequel créer l'élément
-                      </p>
-                    </div>
-                    
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Annuler
-                      </Button>
-                      <Button onClick={createItem} className="bg-primary hover:bg-primary/90">
-                        Créer
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    uploadFiles(e.target.files);
+                  }
+                }}
+              />
+              
+              <Button
+                size="sm"
+                disabled={!apiUrl || uploading}
+                onClick={handleFileSelect}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {uploading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Upload...
+                  </>
+                ) : (
+                  <>
+                    <UploadIcon className="h-4 w-4 mr-2" />
+                    Upload
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </CardHeader>
