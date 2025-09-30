@@ -15,7 +15,7 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
   const [apiUrl, setApiUrl] = useState("");
   const [method, setMethod] = useState("POST");
   const [uploadUrl, setUploadUrl] = useState("");
-  const [uploadMethod, setUploadMethod] = useState("POST");
+  const [uploadMethod, setUploadMethod] = useState("GET");
   const [audioUrl, setAudioUrl] = useState("");
   const [audioMethod, setAudioMethod] = useState("POST");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
@@ -184,39 +184,38 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
             </Button>
           </div>
 
-          {/* Configuration Upload */}
+          {/* Configuration FileTree */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium border-b border-border pb-2">API d'Upload</h3>
+            <h3 className="text-lg font-medium border-b border-border pb-2">API d'Arborescence de Fichiers</h3>
             
             <div className="space-y-2">
-              <Label htmlFor="upload-url">URL de l'API Upload</Label>
+              <Label htmlFor="upload-url">URL de l'API Arborescence</Label>
               <Input
                 id="upload-url"
                 type="url"
-                placeholder="https://api.example.com/upload"
+                placeholder="https://api.example.com/files"
                 value={uploadUrl}
                 onChange={(e) => setUploadUrl(e.target.value)}
                 className="bg-background text-foreground"
               />
               <p className="text-sm text-muted-foreground">
-                L'URL de votre endpoint d'API d'upload de fichiers
+                L'URL de votre endpoint d'API de gestion de fichiers
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="upload-method">Méthode HTTP Upload</Label>
+              <Label htmlFor="upload-method">Méthode HTTP pour récupérer l'arborescence</Label>
               <Select value={uploadMethod} onValueChange={setUploadMethod}>
                 <SelectTrigger className="bg-background text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="GET">GET</SelectItem>
                   <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                  <SelectItem value="PATCH">PATCH</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                La méthode HTTP à utiliser pour uploader les fichiers
+                La méthode HTTP à utiliser pour récupérer l'arborescence
               </p>
             </div>
 
@@ -227,8 +226,45 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
               className="border-border text-foreground hover:bg-accent"
             >
               <TestTube className="mr-2 h-4 w-4" />
-              {isTestingUpload ? "Test en cours..." : "Tester la connexion upload"}
+              {isTestingUpload ? "Test en cours..." : "Tester la connexion fichiers"}
             </Button>
+            
+            <div className="bg-muted p-4 rounded-lg mt-4">
+              <h4 className="font-medium mb-2">Format attendu de l'API</h4>
+              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+{`GET/POST - Récupérer l'arborescence:
+Réponse: {
+  "tree": [
+    {
+      "id": "1",
+      "name": "dossier1",
+      "type": "folder",
+      "path": "/dossier1",
+      "children": [
+        {
+          "id": "2",
+          "name": "fichier.txt",
+          "type": "file",
+          "path": "/dossier1/fichier.txt"
+        }
+      ]
+    }
+  ]
+}
+
+POST - Créer fichier/dossier:
+Body: {
+  "name": "nom",
+  "type": "file|folder",
+  "path": "/chemin/parent"
+}
+
+DELETE - Supprimer:
+Body: {
+  "path": "/chemin/element"
+}`}
+              </pre>
+            </div>
           </div>
 
           {/* Configuration Audio */}
@@ -286,19 +322,6 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
               </p>
             </div>
 
-            <div>
-              <h4 className="font-medium mb-2">Format Upload</h4>
-              <div className="bg-muted p-4 rounded-lg">
-                <pre className="text-sm text-muted-foreground">
-{`FormData {
-  file: [fichier uploadé]
-}`}
-                </pre>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Chaque fichier est envoyé individuellement en tant que FormData.
-              </p>
-            </div>
 
             <div>
               <h4 className="font-medium mb-2">Format Audio</h4>

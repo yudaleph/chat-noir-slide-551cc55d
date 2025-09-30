@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { UploadInterface } from "@/components/upload/UploadInterface";
+import { FileTreeInterface } from "@/components/filetree/FileTreeInterface";
 
 const Upload = () => {
   const [config, setConfig] = useState({ uploadUrl: "", method: "POST" });
@@ -8,13 +8,13 @@ const Upload = () => {
   useEffect(() => {
     // Charger la configuration depuis localStorage
     const savedUrl = localStorage.getItem("upload-api-url") || "";
-    const savedMethod = localStorage.getItem("upload-api-method") || "POST";
+    const savedMethod = localStorage.getItem("upload-api-method") || "GET";
     setConfig({ uploadUrl: savedUrl, method: savedMethod });
   }, []);
 
   return (
     <AppLayout>
-      <UploadInterface uploadUrl={config.uploadUrl} method={config.method} />
+      <FileTreeInterface apiUrl={config.uploadUrl} method={config.method} />
     </AppLayout>
   );
 };
