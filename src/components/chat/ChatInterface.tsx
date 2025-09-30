@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { AudioRecorder } from "@/components/audio/AudioRecorder";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
+import { ChatSettings } from "./ChatSettings";
 
 interface Message {
   id: string;
@@ -28,6 +29,9 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [audioConfig, setAudioConfig] = useState({ apiUrl: "", method: "POST" });
+  const [temperature, setTemperature] = useState(0.7);
+  const [ragEnabled, setRagEnabled] = useState(false);
+  const [ragDocCount, setRagDocCount] = useState(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -74,6 +78,9 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
     try {
       const formData = new FormData();
       formData.append("message", input);
+      formData.append("temperature", temperature.toString());
+      formData.append("rag_enabled", ragEnabled.toString());
+      formData.append("rag_doc_count", ragDocCount.toString());
       
       files.forEach(file => {
         formData.append("files", file);
@@ -195,6 +202,15 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
           )}
           
           <div className="flex space-x-2">
+            <ChatSettings
+              temperature={temperature}
+              onTemperatureChange={setTemperature}
+              ragEnabled={ragEnabled}
+              onRagEnabledChange={setRagEnabled}
+              ragDocCount={ragDocCount}
+              onRagDocCountChange={setRagDocCount}
+            />
+            
             <div className="flex-1 relative">
               <Textarea
                 value={input}
