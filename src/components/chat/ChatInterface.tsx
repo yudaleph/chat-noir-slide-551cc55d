@@ -167,9 +167,8 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
           {isLoading && (
             <div className="flex justify-start">
               <Card className="bg-chat-assistant text-chat-assistant-foreground p-4">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-pulse">...</div>
-                  <span>IA réfléchit...</span>
+                <div className="flex items-center justify-center">
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               </Card>
             </div>
