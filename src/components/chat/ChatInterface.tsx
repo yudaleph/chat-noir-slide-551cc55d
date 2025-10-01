@@ -32,6 +32,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const [temperature, setTemperature] = useState(0.7);
   const [ragEnabled, setRagEnabled] = useState(false);
   const [ragDocCount, setRagDocCount] = useState(5);
+  const [collection, setCollection] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -81,6 +82,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
       formData.append("temperature", temperature.toString());
       formData.append("rag_enabled", ragEnabled.toString());
       formData.append("rag_doc_count", ragDocCount.toString());
+      formData.append("collection", collection);
       
       files.forEach(file => {
         formData.append("files", file);
@@ -208,6 +210,9 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
               onRagEnabledChange={setRagEnabled}
               ragDocCount={ragDocCount}
               onRagDocCountChange={setRagDocCount}
+              collection={collection}
+              onCollectionChange={setCollection}
+              apiUrl={apiUrl}
             />
             
             <div className="flex-1 relative">

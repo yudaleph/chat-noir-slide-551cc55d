@@ -8,50 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* OneDark theme with Red accent */
-    --background: 220 13% 18%;
+    /* OneDark theme with Red accent - Version plus sombre */
+    --background: 220 13% 12%;
     --foreground: 220 14% 71%;
 
-    --card: 220 13% 16%;
+    --card: 220 13% 10%;
     --card-foreground: 220 14% 71%;
 
-    --popover: 220 13% 16%;
+    --popover: 220 13% 10%;
     --popover-foreground: 220 14% 71%;
 
     --primary: 0 78% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 22%;
+    --secondary: 220 13% 16%;
     --secondary-foreground: 220 14% 71%;
 
-    --muted: 220 13% 22%;
+    --muted: 220 13% 16%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 220 13% 25%;
+    --accent: 220 13% 18%;
     --accent-foreground: 220 14% 71%;
 
     --destructive: 0 78% 62%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 25%;
-    --input: 220 13% 25%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
     --ring: 0 78% 62%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 13% 14%;
+    --sidebar-background: 220 13% 8%;
     --sidebar-foreground: 220 14% 71%;
     --sidebar-primary: 0 78% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 22%;
+    --sidebar-accent: 220 13% 16%;
     --sidebar-accent-foreground: 220 14% 71%;
-    --sidebar-border: 220 13% 25%;
+    --sidebar-border: 220 13% 18%;
     --sidebar-ring: 0 78% 62%;
 
     /* Chat specific colors */
     --chat-user: 0 78% 62%;
     --chat-user-foreground: 0 0% 100%;
-    --chat-assistant: 220 13% 22%;
+    --chat-assistant: 220 13% 16%;
     --chat-assistant-foreground: 220 14% 71%;
     
     /* Animations */

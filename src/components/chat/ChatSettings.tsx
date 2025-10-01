@@ -12,6 +12,15 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChatSettingsProps {
   temperature: number;
@@ -20,6 +29,9 @@ interface ChatSettingsProps {
   onRagEnabledChange: (value: boolean) => void;
   ragDocCount: number;
   onRagDocCountChange: (value: number) => void;
+  collection: string;
+  onCollectionChange: (value: string) => void;
+  apiUrl?: string;
 }
 
 export function ChatSettings({
@@ -29,7 +41,38 @@ export function ChatSettings({
   onRagEnabledChange,
   ragDocCount,
   onRagDocCountChange,
+  collection,
+  onCollectionChange,
+  apiUrl = "",
 }: ChatSettingsProps) {
+  const [collections, setCollections] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      if (!apiUrl) return;
+      
+      setLoading(true);
+      try {
+        const response = await fetch(`${apiUrl}/collections`);
+        if (!response.ok) throw new Error("Erreur lors de la récupération des collections");
+        
+        const data = await response.json();
+        setCollections(data.collections || []);
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de récupérer les collections",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, [apiUrl, toast]);
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -99,6 +142,26 @@ export function ChatSettings({
               </p>
             </div>
           )}
+
+          {/* Sélection de collection */}
+          <div className="space-y-2">
+            <Label htmlFor="collection">Collection</Label>
+            <Select value={collection} onValueChange={onCollectionChange} disabled={loading || collections.length === 0}>
+              <SelectTrigger id="collection" className="w-full">
+                <SelectValue placeholder={loading ? "Chargement..." : "Sélectionner une collection"} />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Sélectionnez la collection à utiliser
+            </p>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
