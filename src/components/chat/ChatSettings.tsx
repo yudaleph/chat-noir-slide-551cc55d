@@ -55,11 +55,29 @@ export function ChatSettings({
       
       setLoading(true);
       try {
-        const response = await fetch(`${apiUrl}/collections`);
-        if (!response.ok) throw new Error("Erreur lors de la récupération des collections");
+        const response = await fetch(apiUrl, {
+          method: "GET",
+        });
+        if (!response.ok) throw new Error("Erreur lors de la récupération de l'arborescence");
         
         const data = await response.json();
-        setCollections(data.collections || []);
+        const tree = data.tree || data;
+        
+        // Extraire tous les dossiers de l'arborescence
+        const extractFolders = (nodes: any[]): string[] => {
+          const folders: string[] = [];
+          for (const node of nodes) {
+            if (node.type === "folder") {
+              folders.push(node.path);
+              if (node.children && node.children.length > 0) {
+                folders.push(...extractFolders(node.children));
+              }
+            }
+          }
+          return folders;
+        };
+        
+        setCollections(extractFolders(tree));
       } catch (error) {
         toast({
           title: "Erreur",

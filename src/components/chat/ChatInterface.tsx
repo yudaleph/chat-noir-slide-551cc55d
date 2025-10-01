@@ -29,6 +29,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [audioConfig, setAudioConfig] = useState({ apiUrl: "", method: "POST" });
+  const [fileApiUrl, setFileApiUrl] = useState("");
   const [temperature, setTemperature] = useState(0.7);
   const [ragEnabled, setRagEnabled] = useState(false);
   const [ragDocCount, setRagDocCount] = useState(5);
@@ -41,6 +42,10 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
     const savedAudioUrl = localStorage.getItem("audio-api-url") || "";
     const savedAudioMethod = localStorage.getItem("audio-api-method") || "POST";
     setAudioConfig({ apiUrl: savedAudioUrl, method: savedAudioMethod });
+    
+    // Charger l'URL de l'API des fichiers
+    const savedFileApiUrl = localStorage.getItem("upload-api-url") || "";
+    setFileApiUrl(savedFileApiUrl);
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,7 +217,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
               onRagDocCountChange={setRagDocCount}
               collection={collection}
               onCollectionChange={setCollection}
-              apiUrl={apiUrl}
+              apiUrl={fileApiUrl}
             />
             
             <div className="flex-1 relative">
