@@ -9,14 +9,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { AudioRecorder } from "@/components/audio/AudioRecorder";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 import { ChatSettings } from "./ChatSettings";
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  timestamp: Date;
-  files?: File[];
-}
+import { ConversationSidebar } from "./ConversationSidebar";
+import { RagIndicator } from "./RagIndicator";
+import { useConversations, type Message } from "@/hooks/useConversations";
 
 interface ChatInterfaceProps {
   apiUrl?: string;
@@ -24,7 +19,6 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,16 +30,33 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const [collection, setCollection] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  const {
+    conversations,
+    currentConversationId,
+    setCurrentConversationId,
+    createConversation,
+    deleteConversation,
+    updateConversation,
+    getCurrentConversation,
+  } = useConversations();
+
+  const currentConversation = getCurrentConversation();
+  const messages = currentConversation?.messages || [];
 
   useEffect(() => {
-    // Charger la configuration audio depuis localStorage
     const savedAudioUrl = localStorage.getItem("audio-api-url") || "";
     const savedAudioMethod = localStorage.getItem("audio-api-method") || "POST";
     setAudioConfig({ apiUrl: savedAudioUrl, method: savedAudioMethod });
     
-    // Charger l'URL de l'API des fichiers
     const savedFileApiUrl = localStorage.getItem("upload-api-url") || "";
     setFileApiUrl(savedFileApiUrl);
+  }, []);
+
+  useEffect(() => {
+    if (conversations.length === 0) {
+      createConversation();
+    }
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,15 +79,21 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
       return;
     }
 
+    if (!currentConversationId) {
+      createConversation();
+      return;
+    }
+
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       content: input,
       role: "user",
       timestamp: new Date(),
       files: files.length > 0 ? [...files] : undefined,
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    updateConversation(currentConversationId, updatedMessages);
     setInput("");
     setFiles([]);
     setIsLoading(true);
@@ -84,6 +101,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
     try {
       const formData = new FormData();
       formData.append("message", input);
+      formData.append("conversation_id", currentConversationId);
       formData.append("temperature", temperature.toString());
       formData.append("rag_enabled", ragEnabled.toString());
       formData.append("rag_doc_count", ragDocCount.toString());
@@ -105,13 +123,13 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
       const data = await response.json();
       
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         content: data.response || data.message || "Réponse reçue",
         role: "assistant",
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      updateConversation(currentConversationId, [...updatedMessages, assistantMessage]);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -131,8 +149,26 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <ScrollArea className="flex-1 p-4">
+    <div className="flex h-full bg-background">
+      <ConversationSidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onSelectConversation={setCurrentConversationId}
+        onCreateConversation={createConversation}
+        onDeleteConversation={deleteConversation}
+      />
+      
+      <div className="flex flex-col flex-1">
+        <div className="border-b border-border p-4 flex items-center justify-between bg-card">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">
+              {currentConversation?.title || "Nouvelle conversation"}
+            </h2>
+          </div>
+          <RagIndicator ragEnabled={ragEnabled} collection={collection} />
+        </div>
+        
+        <ScrollArea className="flex-1 p-4">
         <div className="space-y-4 max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
@@ -241,13 +277,15 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
                   apiUrl={audioConfig.apiUrl} 
                   method={audioConfig.method}
                   onResponse={(response) => {
-                    const assistantMessage: Message = {
-                      id: crypto.randomUUID(),
-                      content: response,
-                      role: "assistant",
-                      timestamp: new Date(),
-                    };
-                    setMessages(prev => [...prev, assistantMessage]);
+                    if (currentConversationId) {
+                      const assistantMessage: Message = {
+                        id: crypto.randomUUID(),
+                        content: response,
+                        role: "assistant",
+                        timestamp: new Date(),
+                      };
+                      updateConversation(currentConversationId, [...messages, assistantMessage]);
+                    }
                   }}
                 />
               </div>
@@ -269,6 +307,7 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
             </Button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
