@@ -1,15 +1,29 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import type { useConversations } from "@/hooks/useConversations";
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  conversationHook?: ReturnType<typeof useConversations>;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, conversationHook }: AppLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
+        {conversationHook ? (
+          <AppSidebar conversationHook={conversationHook} />
+        ) : (
+          <AppSidebar conversationHook={{
+            conversations: [],
+            currentConversationId: null,
+            setCurrentConversationId: () => {},
+            createConversation: () => "",
+            deleteConversation: () => {},
+            updateConversation: () => {},
+            getCurrentConversation: () => null,
+          }} />
+        )}
         
         <div className="flex flex-col flex-1">
           <header className="h-14 flex items-center border-b border-border bg-card px-4">

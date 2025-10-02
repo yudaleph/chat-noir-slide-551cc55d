@@ -9,16 +9,16 @@ import { useToast } from "@/components/ui/use-toast";
 import { AudioRecorder } from "@/components/audio/AudioRecorder";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 import { ChatSettings } from "./ChatSettings";
-import { ConversationSidebar } from "./ConversationSidebar";
 import { RagIndicator } from "./RagIndicator";
-import { useConversations, type Message } from "@/hooks/useConversations";
+import type { useConversations, Message } from "@/hooks/useConversations";
 
 interface ChatInterfaceProps {
   apiUrl?: string;
   method?: string;
+  conversationHook: ReturnType<typeof useConversations>;
 }
 
-export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfaceProps) {
+export function ChatInterface({ apiUrl = "", method = "POST", conversationHook }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,14 +32,11 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
   const { toast } = useToast();
   
   const {
-    conversations,
     currentConversationId,
-    setCurrentConversationId,
     createConversation,
-    deleteConversation,
     updateConversation,
     getCurrentConversation,
-  } = useConversations();
+  } = conversationHook;
 
   const currentConversation = getCurrentConversation();
   const messages = currentConversation?.messages || [];
@@ -51,12 +48,6 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
     
     const savedFileApiUrl = localStorage.getItem("upload-api-url") || "";
     setFileApiUrl(savedFileApiUrl);
-  }, []);
-
-  useEffect(() => {
-    if (conversations.length === 0) {
-      createConversation();
-    }
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,14 +141,6 @@ export function ChatInterface({ apiUrl = "", method = "POST" }: ChatInterfacePro
 
   return (
     <div className="flex h-full bg-background">
-      <ConversationSidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={setCurrentConversationId}
-        onCreateConversation={createConversation}
-        onDeleteConversation={deleteConversation}
-      />
-      
       <div className="flex flex-col flex-1">
         <div className="border-b border-border p-4 flex items-center justify-between bg-card">
           <div className="flex items-center gap-2">
