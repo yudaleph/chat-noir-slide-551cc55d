@@ -260,6 +260,11 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, 
                 <AudioRecorder 
                   apiUrl={audioConfig.apiUrl} 
                   method={audioConfig.method}
+                  conversationId={currentConversationId || undefined}
+                  temperature={temperature}
+                  ragEnabled={ragEnabled}
+                  ragDocCount={ragDocCount}
+                  collection={collection}
                   onResponse={(response) => {
                     if (currentConversationId) {
                       const assistantMessage: Message = {

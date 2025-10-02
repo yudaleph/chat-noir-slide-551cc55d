@@ -7,9 +7,23 @@ interface AudioRecorderProps {
   apiUrl: string;
   method: string;
   onResponse?: (response: string) => void;
+  conversationId?: string;
+  temperature?: number;
+  ragEnabled?: boolean;
+  ragDocCount?: number;
+  collection?: string;
 }
 
-export const AudioRecorder = ({ apiUrl, method, onResponse }: AudioRecorderProps) => {
+export const AudioRecorder = ({ 
+  apiUrl, 
+  method, 
+  onResponse,
+  conversationId,
+  temperature = 0.7,
+  ragEnabled = false,
+  ragDocCount = 5,
+  collection = ""
+}: AudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -76,6 +90,14 @@ export const AudioRecorder = ({ apiUrl, method, onResponse }: AudioRecorderProps
       
       const formData = new FormData();
       formData.append('audio', wavBlob, 'recording.wav');
+      
+      if (conversationId) {
+        formData.append('conversation_id', conversationId);
+      }
+      formData.append('temperature', temperature.toString());
+      formData.append('rag_enabled', ragEnabled.toString());
+      formData.append('rag_doc_count', ragDocCount.toString());
+      formData.append('collection', collection);
 
       const response = await fetch(apiUrl, {
         method: method,

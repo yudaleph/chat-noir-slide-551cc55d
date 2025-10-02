@@ -52,7 +52,15 @@ export function useConversations() {
 
   const saveConversations = (convs: Conversation[]) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(convs));
+      // Remove files from messages before saving (files are not serializable)
+      const serializable = convs.map(c => ({
+        ...c,
+        messages: c.messages.map(m => ({
+          ...m,
+          files: undefined // Don't persist files
+        }))
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
       setConversations(convs);
     } catch (error) {
       console.error("Erreur lors de la sauvegarde des conversations:", error);
