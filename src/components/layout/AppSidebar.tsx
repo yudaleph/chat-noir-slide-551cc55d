@@ -1,4 +1,4 @@
-import { MessageSquare, Settings, Upload, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Settings, Upload, Plus, Trash2, Bot } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -48,10 +48,25 @@ export function AppSidebar({ conversationHook }: AppSidebarProps) {
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden">
-        <div className="p-4 flex-shrink-0">
+        <div className="p-4 flex-shrink-0 border-b border-sidebar-border">
+          {!collapsed && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-lg font-bold text-sidebar-foreground">Chat IA</h2>
+            </div>
+          )}
+          {collapsed && (
+            <div className="flex justify-center mb-4">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary-foreground" />
+              </div>
+            </div>
+          )}
           {!collapsed && (
             <Button 
-              className="w-full mb-4 bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90"
               onClick={createConversation}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -61,7 +76,7 @@ export function AppSidebar({ conversationHook }: AppSidebarProps) {
           {collapsed && (
             <Button 
               size="icon" 
-              className="mb-4 bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90"
               onClick={createConversation}
             >
               <Plus className="h-4 w-4" />

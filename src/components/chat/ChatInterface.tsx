@@ -16,9 +16,11 @@ interface ChatInterfaceProps {
   apiUrl?: string;
   method?: string;
   conversationHook: ReturnType<typeof useConversations>;
+  onRagChange?: (enabled: boolean) => void;
+  onCollectionChange?: (collection: string) => void;
 }
 
-export function ChatInterface({ apiUrl = "", method = "POST", conversationHook }: ChatInterfaceProps) {
+export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, onRagChange, onCollectionChange }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +30,14 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook }
   const [ragEnabled, setRagEnabled] = useState(false);
   const [ragDocCount, setRagDocCount] = useState(5);
   const [collection, setCollection] = useState("");
+
+  useEffect(() => {
+    onRagChange?.(ragEnabled);
+  }, [ragEnabled, onRagChange]);
+
+  useEffect(() => {
+    onCollectionChange?.(collection);
+  }, [collection, onCollectionChange]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
@@ -142,15 +152,6 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook }
   return (
     <div className="flex h-full bg-background">
       <div className="flex flex-col flex-1">
-        <div className="border-b border-border p-4 flex items-center justify-between bg-card">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">
-              {currentConversation?.title || "Nouvelle conversation"}
-            </h2>
-          </div>
-          <RagIndicator ragEnabled={ragEnabled} collection={collection} />
-        </div>
-        
         <ScrollArea className="flex-1 p-4">
         <div className="space-y-4 max-w-4xl mx-auto">
           {messages.length === 0 && (

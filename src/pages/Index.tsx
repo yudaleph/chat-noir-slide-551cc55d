@@ -6,6 +6,8 @@ import { useConversations } from "@/hooks/useConversations";
 const Index = () => {
   const [config, setConfig] = useState({ apiUrl: "", method: "POST" });
   const conversationHook = useConversations();
+  const [ragEnabled, setRagEnabled] = useState(false);
+  const [collection, setCollection] = useState("");
 
   useEffect(() => {
     const savedUrl = localStorage.getItem("chat-api-url") || "";
@@ -20,11 +22,17 @@ const Index = () => {
   }, []);
 
   return (
-    <AppLayout conversationHook={conversationHook}>
+    <AppLayout 
+      conversationHook={conversationHook}
+      ragEnabled={ragEnabled}
+      collection={collection}
+    >
       <ChatInterface 
         apiUrl={config.apiUrl} 
         method={config.method}
         conversationHook={conversationHook}
+        onRagChange={setRagEnabled}
+        onCollectionChange={setCollection}
       />
     </AppLayout>
   );
