@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getConversationIds, addConversationId, removeConversationId } from "@/lib/cookies";
 
 export interface Message {
   id: string;
@@ -24,27 +25,54 @@ export function useConversations() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    loadConversations();
+    loadConversationsFromCookie();
   }, []);
 
-  const loadConversations = () => {
+  const loadConversationsFromCookie = () => {
     try {
+      // Lire les IDs depuis le cookie
+      const cookieIds = getConversationIds();
+      
+      if (cookieIds.length === 0) {
+        setConversations([]);
+        return;
+      }
+
+      // Récupérer les données depuis localStorage si elles existent
       const stored = localStorage.getItem(STORAGE_KEY);
+      let storedConvs: any[] = [];
       if (stored) {
-        const parsed = JSON.parse(stored);
-        const convs = parsed.map((c: any) => ({
-          ...c,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-          messages: c.messages.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          })),
-        }));
-        setConversations(convs);
-        if (convs.length > 0 && !currentConversationId) {
-          setCurrentConversationId(convs[0].id);
+        storedConvs = JSON.parse(stored);
+      }
+
+      // Créer les conversations basées sur les IDs du cookie
+      const convs = cookieIds.map(id => {
+        const existing = storedConvs.find((c: any) => c.id === id);
+        if (existing) {
+          return {
+            ...existing,
+            createdAt: new Date(existing.createdAt),
+            updatedAt: new Date(existing.updatedAt),
+            messages: existing.messages.map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp),
+            })),
+          };
+        } else {
+          // Créer une conversation vide pour cet ID
+          return {
+            id,
+            title: `Conversation ${id.slice(0, 8)}`,
+            messages: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
         }
+      });
+
+      setConversations(convs);
+      if (convs.length > 0 && !currentConversationId) {
+        setCurrentConversationId(convs[0].id);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des conversations:", error);
@@ -126,6 +154,10 @@ export function useConversations() {
     const updated = [newConv, ...conversations];
     saveConversations(updated);
     setCurrentConversationId(newConv.id);
+    
+    // Ajouter l'ID au cookie
+    addConversationId(newConv.id);
+    
     return newConv.id;
   };
 
@@ -135,6 +167,9 @@ export function useConversations() {
     if (currentConversationId === id) {
       setCurrentConversationId(updated.length > 0 ? updated[0].id : null);
     }
+    
+    // Retirer l'ID du cookie
+    removeConversationId(id);
   };
 
   const updateConversation = (id: string, messages: Message[]) => {

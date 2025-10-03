@@ -13,8 +13,6 @@ const Index = () => {
     const savedUrl = localStorage.getItem("chat-api-url") || "";
     const savedMethod = localStorage.getItem("chat-api-method") || "POST";
     setConfig({ apiUrl: savedUrl, method: savedMethod });
-    // Assurer un cookie conversation stable
-    import("@/lib/cookies").then(({ ensureConversationCookie }) => ensureConversationCookie());
   }, []);
 
   useEffect(() => {

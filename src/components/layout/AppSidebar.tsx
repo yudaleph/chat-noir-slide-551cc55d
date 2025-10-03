@@ -126,14 +126,13 @@ export function AppSidebar({ conversationHook }: AppSidebarProps) {
                         : "hover:bg-sidebar-accent"
                     )}
                     onClick={async () => {
-                      // Conserver la sélection et charger le contenu à la demande
+                      // Sélectionner la conversation
                       setCurrentConversationId(conv.id);
+                      
+                      // Charger le contenu depuis l'API si disponible
                       const historyUrl = localStorage.getItem("history-api-url");
                       const historyMethod = localStorage.getItem("history-api-method") || "GET";
                       if (!historyUrl) return;
-                      // Charger cookie conversation stable
-                      const { ensureConversationCookie } = await import("@/lib/cookies");
-                      const cookieVal = ensureConversationCookie();
 
                       try {
                         let fetchUrl = historyUrl;
@@ -149,12 +148,6 @@ export function AppSidebar({ conversationHook }: AppSidebarProps) {
                             body: JSON.stringify({ id: conv.id })
                           };
                         }
-
-                        // Envoyer aussi l'identifiant de conversation côté client si utile pour le backend
-                        (options.headers as Record<string,string>) = {
-                          ...(options.headers as Record<string,string>),
-                          'X-Conversation': cookieVal,
-                        };
 
                         const res = await fetch(fetchUrl, options);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);

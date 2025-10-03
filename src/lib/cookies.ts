@@ -7,13 +7,31 @@ export function setCookie(name: string, value: string, maxAgeSeconds: number = 6
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}`;
 }
 
-const CONVERSATION_COOKIE_NAME = 'conversation';
+const CONVERSATIONS_COOKIE_NAME = 'conversation_ids';
 
-export function ensureConversationCookie(): string {
-  let val = getCookie(CONVERSATION_COOKIE_NAME);
-  if (!val) {
-    val = crypto.randomUUID();
-    setCookie(CONVERSATION_COOKIE_NAME, val);
+export function getConversationIds(): string[] {
+  const val = getCookie(CONVERSATIONS_COOKIE_NAME);
+  if (!val) return [];
+  try {
+    return JSON.parse(val);
+  } catch {
+    return [];
   }
-  return val;
+}
+
+export function setConversationIds(ids: string[]) {
+  setCookie(CONVERSATIONS_COOKIE_NAME, JSON.stringify(ids));
+}
+
+export function addConversationId(id: string) {
+  const ids = getConversationIds();
+  if (!ids.includes(id)) {
+    ids.unshift(id); // Ajouter au début
+    setConversationIds(ids);
+  }
+}
+
+export function removeConversationId(id: string) {
+  const ids = getConversationIds();
+  setConversationIds(ids.filter(convId => convId !== id));
 }
