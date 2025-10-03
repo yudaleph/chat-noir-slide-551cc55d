@@ -27,6 +27,8 @@ export function AppLayout({ children, conversationHook, ragEnabled = false, coll
             deleteConversation: () => {},
             updateConversation: () => {},
             getCurrentConversation: () => null,
+            syncWithServer: async () => {},
+            isSyncing: false,
           }} />
         )}
         

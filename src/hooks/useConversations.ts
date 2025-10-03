@@ -21,6 +21,7 @@ const STORAGE_KEY = "chat-conversations";
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     loadConversations();
@@ -47,6 +48,53 @@ export function useConversations() {
       }
     } catch (error) {
       console.error("Erreur lors du chargement des conversations:", error);
+    }
+  };
+
+  const syncWithServer = async () => {
+    const historyUrl = localStorage.getItem("history-api-url");
+    const historyMethod = localStorage.getItem("history-api-method") || "GET";
+    
+    if (!historyUrl) {
+      console.log("Aucune API d'historique configurée");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const response = await fetch(historyUrl, {
+        method: historyMethod,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const serverConvs = data.conversations || data;
+      
+      if (Array.isArray(serverConvs) && serverConvs.length > 0) {
+        const convs = serverConvs.map((c: any) => ({
+          ...c,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+          messages: c.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          })),
+        }));
+        
+        // Sauvegarder l'historique récupéré
+        saveConversations(convs);
+        console.log(`${convs.length} conversations synchronisées depuis le serveur`);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la synchronisation de l'historique:", error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -118,5 +166,7 @@ export function useConversations() {
     deleteConversation,
     updateConversation,
     getCurrentConversation,
+    syncWithServer,
+    isSyncing,
   };
 }

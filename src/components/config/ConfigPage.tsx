@@ -18,8 +18,11 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
   const [uploadMethod, setUploadMethod] = useState("GET");
   const [audioUrl, setAudioUrl] = useState("");
   const [audioMethod, setAudioMethod] = useState("POST");
+  const [historyUrl, setHistoryUrl] = useState("");
+  const [historyMethod, setHistoryMethod] = useState("GET");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isTestingUpload, setIsTestingUpload] = useState(false);
+  const [isTestingHistory, setIsTestingHistory] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,6 +33,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     const savedUploadMethod = localStorage.getItem("upload-api-method");
     const savedAudioUrl = localStorage.getItem("audio-api-url");
     const savedAudioMethod = localStorage.getItem("audio-api-method");
+    const savedHistoryUrl = localStorage.getItem("history-api-url");
+    const savedHistoryMethod = localStorage.getItem("history-api-method");
     
     if (savedUrl) setApiUrl(savedUrl);
     if (savedMethod) setMethod(savedMethod);
@@ -37,6 +42,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     if (savedUploadMethod) setUploadMethod(savedUploadMethod);
     if (savedAudioUrl) setAudioUrl(savedAudioUrl);
     if (savedAudioMethod) setAudioMethod(savedAudioMethod);
+    if (savedHistoryUrl) setHistoryUrl(savedHistoryUrl);
+    if (savedHistoryMethod) setHistoryMethod(savedHistoryMethod);
   }, []);
 
   const saveConfig = () => {
@@ -46,6 +53,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     localStorage.setItem("upload-api-method", uploadMethod);
     localStorage.setItem("audio-api-url", audioUrl);
     localStorage.setItem("audio-api-method", audioMethod);
+    localStorage.setItem("history-api-url", historyUrl);
+    localStorage.setItem("history-api-method", historyMethod);
     
     onConfigChange?.({ apiUrl, method });
     
@@ -124,6 +133,47 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
       });
     } finally {
       setIsTestingUpload(false);
+    }
+  };
+
+  const testHistoryConnection = async () => {
+    if (!historyUrl) {
+      toast({
+        title: "URL d'historique requise",
+        description: "Veuillez entrer une URL d'historique valide.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingHistory(true);
+    
+    try {
+      const response = await fetch(historyUrl, {
+        method: historyMethod,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const convs = data.conversations || data;
+        toast({
+          title: "Connexion historique réussie",
+          description: `L'API d'historique est accessible. ${Array.isArray(convs) ? convs.length : 0} conversations trouvées.`,
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur de connexion historique",
+        description: error instanceof Error ? error.message : "Impossible de joindre l'API d'historique",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingHistory(false);
     }
   };
 
@@ -301,6 +351,77 @@ Body: {
               <p className="text-sm text-muted-foreground">
                 La méthode HTTP à utiliser pour envoyer les enregistrements audio
               </p>
+            </div>
+          </div>
+
+          {/* Configuration Historique */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">API Historique</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="history-url">URL de l'API Historique</Label>
+              <Input
+                id="history-url"
+                type="url"
+                placeholder="https://api.example.com/history"
+                value={historyUrl}
+                onChange={(e) => setHistoryUrl(e.target.value)}
+                className="bg-background text-foreground"
+              />
+              <p className="text-sm text-muted-foreground">
+                L'URL de votre endpoint d'API d'historique des conversations
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="history-method">Méthode HTTP Historique</Label>
+              <Select value={historyMethod} onValueChange={setHistoryMethod}>
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="POST">POST</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                La méthode HTTP à utiliser pour récupérer l'historique
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={testHistoryConnection}
+              disabled={isTestingHistory || !historyUrl}
+              className="border-border text-foreground hover:bg-accent"
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              {isTestingHistory ? "Test en cours..." : "Tester la connexion historique"}
+            </Button>
+
+            <div className="bg-muted p-4 rounded-lg mt-4">
+              <h4 className="font-medium mb-2">Format attendu de l'API</h4>
+              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+{`GET/POST - Récupérer l'historique:
+Réponse: {
+  "conversations": [
+    {
+      "id": "uuid",
+      "title": "Titre de la conversation",
+      "messages": [
+        {
+          "id": "uuid",
+          "content": "message",
+          "role": "user|assistant",
+          "timestamp": "2024-01-01T00:00:00Z"
+        }
+      ],
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}`}
+              </pre>
             </div>
           </div>
 
