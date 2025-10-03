@@ -125,7 +125,54 @@ export function AppSidebar({ conversationHook }: AppSidebarProps) {
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-sidebar-accent"
                     )}
-                    onClick={() => setCurrentConversationId(conv.id)}
+                    onClick={async () => {
+                      // Conserver la sélection et charger le contenu à la demande
+                      setCurrentConversationId(conv.id);
+                      const historyUrl = localStorage.getItem("history-api-url");
+                      const historyMethod = localStorage.getItem("history-api-method") || "GET";
+                      if (!historyUrl) return;
+                      // Charger cookie conversation stable
+                      const { ensureConversationCookie } = await import("@/lib/cookies");
+                      const cookieVal = ensureConversationCookie();
+
+                      try {
+                        let fetchUrl = historyUrl;
+                        let options: RequestInit = { credentials: 'include', headers: {} };
+
+                        if (historyMethod === 'GET') {
+                          fetchUrl = `${historyUrl.replace(/\/$/, '')}/${encodeURIComponent(conv.id)}`;
+                        } else {
+                          options = {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: conv.id })
+                          };
+                        }
+
+                        // Envoyer aussi l'identifiant de conversation côté client si utile pour le backend
+                        (options.headers as Record<string,string>) = {
+                          ...(options.headers as Record<string,string>),
+                          'X-Conversation': cookieVal,
+                        };
+
+                        const res = await fetch(fetchUrl, options);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const data = await res.json();
+                        const detail = data.conversation || data;
+                        if (detail && Array.isArray(detail.messages)) {
+                          // Normaliser les dates
+                          const messages = detail.messages.map((m: any) => ({
+                            ...m,
+                            timestamp: new Date(m.timestamp),
+                          }));
+                          // Mettre à jour le store local avec les messages récupérés
+                          conversationHook.updateConversation(conv.id, messages);
+                        }
+                      } catch (e) {
+                        console.error("Erreur lors du chargement de la conversation:", e);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {!collapsed && (
