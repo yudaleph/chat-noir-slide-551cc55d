@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getConversationIds, addConversationId, removeConversationId } from "@/lib/cookies";
+import { getConversationIds, addConversationId, removeConversationId, setConversationIds } from "@/lib/cookies";
 
 export interface Message {
   id: string;
@@ -109,12 +109,14 @@ export function useConversations() {
           ...c,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
-          messages: c.messages.map((m: any) => ({
+          messages: Array.isArray(c.messages) ? c.messages.map((m: any) => ({
             ...m,
             timestamp: new Date(m.timestamp),
-          })),
+          })) : [],
         }));
         
+        // Mettre à jour le cookie d'IDs pour la reconstruction au reload
+        setConversationIds(convs.map((c: any) => c.id));
         // Sauvegarder l'historique récupéré
         saveConversations(convs);
         console.log(`${convs.length} conversations synchronisées depuis le serveur`);
