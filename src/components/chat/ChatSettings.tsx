@@ -225,24 +225,26 @@ export function ChatSettings({
           )}
 
           {/* Sélection de collection */}
-          <div className="space-y-2">
-            <Label htmlFor="collection">Collection</Label>
-            <Select value={collection} onValueChange={onCollectionChange} disabled={loading || collections.length === 0}>
-              <SelectTrigger id="collection" className="w-full">
-                <SelectValue placeholder={loading ? "Chargement..." : "Sélectionner une collection"} />
-              </SelectTrigger>
-              <SelectContent>
-                {collections.map((col) => (
-                  <SelectItem key={col} value={col}>
-                    {col}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Sélectionnez la collection à utiliser
-            </p>
-          </div>
+          {ragEnabled && (
+            <div className="space-y-2">
+              <Label htmlFor="collection">Collection</Label>
+              <Select value={collection} onValueChange={onCollectionChange} disabled={loading || collections.length === 0}>
+                <SelectTrigger id="collection" className="w-full">
+                  <SelectValue placeholder={loading ? "Chargement..." : "Sélectionner une collection"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {collections.map((col) => (
+                    <SelectItem key={col} value={col}>
+                      {col}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez la collection à utiliser
+              </p>
+            </div>
+          )}
 
           {/* Activation des outils */}
           <div className="space-y-2">
