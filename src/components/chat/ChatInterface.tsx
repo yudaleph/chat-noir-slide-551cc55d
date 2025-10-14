@@ -30,6 +30,8 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, 
   const [ragEnabled, setRagEnabled] = useState(false);
   const [ragDocCount, setRagDocCount] = useState(5);
   const [collection, setCollection] = useState("");
+  const [toolsEnabled, setToolsEnabled] = useState(false);
+  const [enabledTools, setEnabledTools] = useState<string[]>([]);
 
   useEffect(() => {
     onRagChange?.(ragEnabled);
@@ -107,6 +109,8 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, 
       formData.append("rag_enabled", ragEnabled.toString());
       formData.append("rag_doc_count", ragDocCount.toString());
       formData.append("collection", collection);
+      formData.append("tools_enabled", toolsEnabled.toString());
+      formData.append("enabled_tools", JSON.stringify(enabledTools));
       
       files.forEach(file => {
         formData.append("files", file);
@@ -237,6 +241,10 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, 
               onRagDocCountChange={setRagDocCount}
               collection={collection}
               onCollectionChange={setCollection}
+              toolsEnabled={toolsEnabled}
+              onToolsEnabledChange={setToolsEnabled}
+              enabledTools={enabledTools}
+              onEnabledToolsChange={setEnabledTools}
               apiUrl={fileApiUrl}
             />
             

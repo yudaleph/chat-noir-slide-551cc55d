@@ -20,9 +20,12 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
   const [audioMethod, setAudioMethod] = useState("POST");
   const [historyUrl, setHistoryUrl] = useState("");
   const [historyMethod, setHistoryMethod] = useState("GET");
+  const [toolsUrl, setToolsUrl] = useState("");
+  const [toolsMethod, setToolsMethod] = useState("GET");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isTestingUpload, setIsTestingUpload] = useState(false);
   const [isTestingHistory, setIsTestingHistory] = useState(false);
+  const [isTestingTools, setIsTestingTools] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +38,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     const savedAudioMethod = localStorage.getItem("audio-api-method");
     const savedHistoryUrl = localStorage.getItem("history-api-url");
     const savedHistoryMethod = localStorage.getItem("history-api-method");
+    const savedToolsUrl = localStorage.getItem("tools-api-url");
+    const savedToolsMethod = localStorage.getItem("tools-api-method");
     
     if (savedUrl) setApiUrl(savedUrl);
     if (savedMethod) setMethod(savedMethod);
@@ -44,6 +49,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     if (savedAudioMethod) setAudioMethod(savedAudioMethod);
     if (savedHistoryUrl) setHistoryUrl(savedHistoryUrl);
     if (savedHistoryMethod) setHistoryMethod(savedHistoryMethod);
+    if (savedToolsUrl) setToolsUrl(savedToolsUrl);
+    if (savedToolsMethod) setToolsMethod(savedToolsMethod);
   }, []);
 
   const saveConfig = () => {
@@ -55,6 +62,8 @@ export function ConfigPage({ onConfigChange }: ConfigPageProps) {
     localStorage.setItem("audio-api-method", audioMethod);
     localStorage.setItem("history-api-url", historyUrl);
     localStorage.setItem("history-api-method", historyMethod);
+    localStorage.setItem("tools-api-url", toolsUrl);
+    localStorage.setItem("tools-api-method", toolsMethod);
     
     onConfigChange?.({ apiUrl, method });
     
@@ -418,6 +427,114 @@ Réponse: {
       ],
       "createdAt": "2024-01-01T00:00:00Z",
       "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}`}
+              </pre>
+            </div>
+          </div>
+
+          {/* Configuration Outils */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium border-b border-border pb-2">API Outils</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tools-url">URL de l'API Outils</Label>
+              <Input
+                id="tools-url"
+                type="url"
+                placeholder="https://api.example.com/tools"
+                value={toolsUrl}
+                onChange={(e) => setToolsUrl(e.target.value)}
+                className="bg-background text-foreground"
+              />
+              <p className="text-sm text-muted-foreground">
+                L'URL de votre endpoint d'API de gestion des outils
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tools-method">Méthode HTTP Outils</Label>
+              <Select value={toolsMethod} onValueChange={setToolsMethod}>
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="POST">POST</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                La méthode HTTP à utiliser pour récupérer la liste des outils
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!toolsUrl) {
+                  toast({
+                    title: "URL d'outils requise",
+                    description: "Veuillez entrer une URL d'outils valide.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                setIsTestingTools(true);
+                
+                try {
+                  const response = await fetch(toolsUrl, {
+                    method: toolsMethod,
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                  });
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    const tools = data.tools || data;
+                    toast({
+                      title: "Connexion outils réussie",
+                      description: `L'API d'outils est accessible. ${Array.isArray(tools) ? tools.length : 0} outils trouvés.`,
+                    });
+                  } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Erreur de connexion outils",
+                    description: error instanceof Error ? error.message : "Impossible de joindre l'API d'outils",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsTestingTools(false);
+                }
+              }}
+              disabled={isTestingTools || !toolsUrl}
+              className="border-border text-foreground hover:bg-accent"
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              {isTestingTools ? "Test en cours..." : "Tester la connexion outils"}
+            </Button>
+
+            <div className="bg-muted p-4 rounded-lg mt-4">
+              <h4 className="font-medium mb-2">Format attendu de l'API</h4>
+              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+{`GET/POST - Récupérer les outils:
+Réponse: {
+  "tools": [
+    {
+      "id": "tool-1",
+      "name": "Recherche Web",
+      "description": "Effectue une recherche sur le web",
+      "enabled": true
+    },
+    {
+      "id": "tool-2", 
+      "name": "Génération d'image",
+      "description": "Génère des images avec l'IA",
+      "enabled": false
     }
   ]
 }`}

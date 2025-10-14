@@ -30,52 +30,37 @@ export function useConversations() {
 
   const loadConversationsFromCookie = () => {
     try {
-      // Lire les IDs depuis le cookie
-      const cookieIds = getConversationIds();
-      
-      if (cookieIds.length === 0) {
+      // Récupérer les données depuis localStorage
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
         setConversations([]);
         return;
       }
 
-      // Récupérer les données depuis localStorage si elles existent
-      const stored = localStorage.getItem(STORAGE_KEY);
-      let storedConvs: any[] = [];
-      if (stored) {
-        storedConvs = JSON.parse(stored);
-      }
-
-      // Créer les conversations basées sur les IDs du cookie
-      const convs = cookieIds.map(id => {
-        const existing = storedConvs.find((c: any) => c.id === id);
-        if (existing) {
-          return {
-            ...existing,
-            createdAt: new Date(existing.createdAt),
-            updatedAt: new Date(existing.updatedAt),
-            messages: existing.messages.map((m: any) => ({
-              ...m,
-              timestamp: new Date(m.timestamp),
-            })),
-          };
-        } else {
-          // Créer une conversation vide pour cet ID
-          return {
-            id,
-            title: `Conversation ${id.slice(0, 8)}`,
-            messages: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        }
-      });
+      const storedConvs: any[] = JSON.parse(stored);
+      
+      // Créer les conversations depuis localStorage
+      const convs = storedConvs.map(conv => ({
+        ...conv,
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt),
+        messages: Array.isArray(conv.messages) ? conv.messages.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        })) : [],
+      }));
 
       setConversations(convs);
+      
+      // Synchroniser les IDs dans le cookie
+      setConversationIds(convs.map(c => c.id));
+      
       if (convs.length > 0 && !currentConversationId) {
         setCurrentConversationId(convs[0].id);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des conversations:", error);
+      setConversations([]);
     }
   };
 

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,13 @@ import {
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
+interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
 interface ChatSettingsProps {
   temperature: number;
   onTemperatureChange: (value: number) => void;
@@ -31,6 +39,10 @@ interface ChatSettingsProps {
   onRagDocCountChange: (value: number) => void;
   collection: string;
   onCollectionChange: (value: string) => void;
+  toolsEnabled: boolean;
+  onToolsEnabledChange: (value: boolean) => void;
+  enabledTools: string[];
+  onEnabledToolsChange: (tools: string[]) => void;
   apiUrl?: string;
 }
 
@@ -43,10 +55,16 @@ export function ChatSettings({
   onRagDocCountChange,
   collection,
   onCollectionChange,
+  toolsEnabled,
+  onToolsEnabledChange,
+  enabledTools,
+  onEnabledToolsChange,
   apiUrl = "",
 }: ChatSettingsProps) {
   const [collections, setCollections] = useState<string[]>([]);
+  const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTools, setLoadingTools] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +109,51 @@ export function ChatSettings({
 
     fetchCollections();
   }, [apiUrl, toast]);
+
+  useEffect(() => {
+    const fetchTools = async () => {
+      const toolsApiUrl = localStorage.getItem("tools-api-url");
+      const toolsApiMethod = localStorage.getItem("tools-api-method") || "GET";
+      
+      if (!toolsApiUrl) return;
+      
+      setLoadingTools(true);
+      try {
+        const response = await fetch(toolsApiUrl, {
+          method: toolsApiMethod,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error("Erreur lors de la récupération des outils");
+        
+        const data = await response.json();
+        const fetchedTools = data.tools || data;
+        
+        if (Array.isArray(fetchedTools)) {
+          setTools(fetchedTools);
+        }
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de récupérer les outils",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingTools(false);
+      }
+    };
+
+    fetchTools();
+  }, [toast]);
+
+  const handleToolToggle = (toolId: string, checked: boolean) => {
+    if (checked) {
+      onEnabledToolsChange([...enabledTools, toolId]);
+    } else {
+      onEnabledToolsChange(enabledTools.filter(id => id !== toolId));
+    }
+  };
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -180,6 +243,57 @@ export function ChatSettings({
               Sélectionnez la collection à utiliser
             </p>
           </div>
+
+          {/* Activation des outils */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="tools-enabled">Activer les outils</Label>
+              <Switch
+                id="tools-enabled"
+                checked={toolsEnabled}
+                onCheckedChange={onToolsEnabledChange}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Permet à l'IA d'utiliser des outils externes
+            </p>
+          </div>
+
+          {/* Liste des outils */}
+          {toolsEnabled && (
+            <div className="space-y-2">
+              <Label>Outils disponibles</Label>
+              {loadingTools ? (
+                <p className="text-sm text-muted-foreground">Chargement des outils...</p>
+              ) : tools.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun outil disponible. Configurez l'API des outils.</p>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {tools.map((tool) => (
+                    <div key={tool.id} className="flex items-start space-x-3 p-3 border border-border rounded-lg">
+                      <Checkbox
+                        id={`tool-${tool.id}`}
+                        checked={enabledTools.includes(tool.id)}
+                        onCheckedChange={(checked) => handleToolToggle(tool.id, checked as boolean)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={`tool-${tool.id}`}
+                          className="font-medium cursor-pointer"
+                        >
+                          {tool.name}
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {tool.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
