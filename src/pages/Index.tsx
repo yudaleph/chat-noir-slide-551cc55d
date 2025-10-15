@@ -16,13 +16,8 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    // Synchroniser avec le serveur au chargement
-    conversationHook.syncWithServer().then(() => {
-      // Créer une nouvelle conversation seulement si aucune n'existe après la sync
-      if (conversationHook.conversations.length === 0) {
-        conversationHook.createConversation();
-      }
-    });
+    // Synchroniser avec le serveur au chargement si configuré
+    conversationHook.syncWithServer();
   }, []);
 
   return (
