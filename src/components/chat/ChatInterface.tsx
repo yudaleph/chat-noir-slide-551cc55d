@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, X } from "lucide-react";
+import { Send, Paperclip, X, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AudioRecorder } from "@/components/audio/AudioRecorder";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 import { ChatSettings } from "./ChatSettings";
@@ -249,12 +250,36 @@ export function ChatInterface({ apiUrl = "", method = "POST", conversationHook, 
             />
             
             <div className="flex-1 relative">
+              {toolsEnabled && enabledTools.length > 0 && (
+                <div className="absolute left-2 top-2 z-10">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md border border-border">
+                          <Wrench className="h-3 w-3" />
+                          <span>{enabledTools.length}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <div className="space-y-1">
+                          <p className="font-medium">Outils activés :</p>
+                          <ul className="list-disc list-inside text-xs">
+                            {enabledTools.map(tool => (
+                              <li key={tool}>{tool}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Tapez votre message..."
-                className="resize-none pr-12 bg-card text-card-foreground"
+                className={`resize-none pr-12 bg-card text-card-foreground ${toolsEnabled && enabledTools.length > 0 ? 'pl-16' : ''}`}
                 rows={1}
               />
               <div className="absolute right-2 top-2 flex space-x-1">
