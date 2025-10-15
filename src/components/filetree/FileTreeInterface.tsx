@@ -28,6 +28,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [selectedFolderPath, setSelectedFolderPath] = useState<string>("/");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -88,7 +89,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
         const file = files[i];
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("path", "/");
+        formData.append("path", selectedFolderPath);
 
         const response = await fetch(apiUrl, {
           method: "POST",
@@ -102,7 +103,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
 
       toast({
         title: "Fichiers uploadés",
-        description: `${files.length} fichier(s) uploadé(s) avec succès.`,
+        description: `${files.length} fichier(s) uploadé(s) dans ${selectedFolderPath}.`,
       });
 
       await fetchTree();
@@ -186,7 +187,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
     }
   };
 
-  const toggleFolder = (id: string) => {
+  const toggleFolder = (id: string, path: string) => {
     setExpandedFolders(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -196,6 +197,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
       }
       return next;
     });
+    setSelectedFolderPath(path);
   };
 
   const renderTree = (nodes: TreeNode[], level: number = 0): JSX.Element => {
@@ -213,7 +215,7 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
               >
                 <div
                   className="flex items-center gap-2 flex-1"
-                  onClick={() => isFolder && toggleFolder(node.id)}
+                  onClick={() => isFolder && toggleFolder(node.id, node.path)}
                 >
                   {isFolder ? (
                     <Folder className={`h-4 w-4 ${isExpanded ? "text-primary" : "text-muted-foreground"}`} />
