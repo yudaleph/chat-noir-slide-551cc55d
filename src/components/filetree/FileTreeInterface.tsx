@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Folder, File, Upload as UploadIcon, Trash2, RefreshCw } from "lucide-react";
+import { Folder, File, Upload as UploadIcon, Trash2, RefreshCw, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface TreeNode {
   id: string;
@@ -23,6 +26,8 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -109,6 +114,42 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const createFolder = async () => {
+    if (!apiUrl || !newFolderName.trim()) return;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "folder",
+          path: `/${newFolderName.trim()}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      toast({
+        title: "Dossier créé",
+        description: `Le dossier "${newFolderName}" a été créé avec succès.`,
+      });
+
+      setNewFolderName("");
+      setIsCreateFolderOpen(false);
+      await fetchTree();
+    } catch (error) {
+      toast({
+        title: "Erreur de création",
+        description: error instanceof Error ? error.message : "Impossible de créer le dossier",
+        variant: "destructive",
+      });
     }
   };
 
@@ -228,6 +269,60 @@ export function FileTreeInterface({ apiUrl = "", method = "GET" }: FileTreeInter
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                 Actualiser
               </Button>
+              
+              <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!apiUrl}
+                  >
+                    <FolderPlus className="h-4 w-4 mr-2" />
+                    Nouveau dossier
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Créer un nouveau dossier</DialogTitle>
+                    <DialogDescription>
+                      Entrez le nom du dossier à créer.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="folder-name">Nom du dossier</Label>
+                      <Input
+                        id="folder-name"
+                        placeholder="mon-dossier"
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            createFolder();
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsCreateFolderOpen(false);
+                          setNewFolderName("");
+                        }}
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        onClick={createFolder}
+                        disabled={!newFolderName.trim()}
+                      >
+                        Créer
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               
               <input
                 ref={fileInputRef}
